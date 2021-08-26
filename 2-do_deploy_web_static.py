@@ -3,10 +3,8 @@
 Write a Fabric script that generates a .tgz archive from the contents
 """
 from fabric.operations import local, run, put
-from datetime import datetime
-import os
-from fabric.api import env
-import re
+from datetime import datetime as d
+from fabric.api import *
 
 def do_pack():
     """
@@ -23,39 +21,34 @@ def do_pack():
 
 def do_deploy(archive_path):
     """Function to distribute an archive to a server"""
-    if not os.path.exists(archive_path):
+    destination = "/tmp/" + archive_path.split("/")[-1]
+    result = put(archive_path, "/tmp/")
+    if result.failed:
         return False
-    rex = r'^versions/(\S+).tgz'
-    match = re.search(rex, archive_path)
-    filename = match.group(1)
-    res = put(archive_path, "/tmp/{}.tgz".format(filename))
-    if res.failed:
+    filename = archive_path.split("/")[-1]
+    f = filename.split(".")[0]
+    directory = "/data/web_static/releases/" + f
+    run_res = run("mkdir -p \"%s\"" % directory)
+    if run_res.failed:
         return False
-    res = run("mkdir -p /data/web_static/releases/{}/".format(filename))
-    if res.failed:
+    run_res = run("tar -xzf %s -C %s" % (destination, directory))
+    if run_res.failed:
         return False
-    res = run("tar -xzf /tmp/{}.tgz -C /data/web_static/releases/{}/"
-              .format(filename, filename))
-    if res.failed:
+    run_res = run("rm %s" % destination)
+    if run_res:
         return False
-    res = run("rm /tmp/{}.tgz".format(filename))
-    if res.failed:
+    web = directory + "/web_static/*"
+    run_res = run("mv %s %s" % (web, directory))
+    if run_res.failed:
         return False
-    res = run("mv /data/web_static/releases/{}"
-              "/web_static/* /data/web_static/releases/{}/"
-              .format(filename, filename))
-    if res.failed:
+    web = web[0:-2]
+    run_res = run("rm -rf %s" % web)
+    if run_res.failed:
         return False
-    res = run("rm -rf /data/web_static/releases/{}/web_static"
-              .format(filename))
-    if res.failed:
+    run_res = run("rm -rf /data/web_static/current")
+    if run_res.failed:
         return False
-    res = run("rm -rf /data/web_static/current")
-    if res.failed:
+    run_res = run("ln -s %s /data/web_static/current" % directory)
+    if run_res.failed:
         return False
-    res = run("ln -s /data/web_static/releases/{}/ /data/web_static/current"
-              .format(filename))
-    if res.failed:
-        return False
-    print('New version deployed!')
     return True
