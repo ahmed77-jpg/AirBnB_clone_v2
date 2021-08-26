@@ -6,6 +6,9 @@ from fabric.operations import local, run, put
 from datetime import datetime as d
 from fabric.api import *
 
+env.hosts = ['34.139.123.27', '34.73.206.129']
+
+
 def do_pack():
     """
     function creates a .tgz
