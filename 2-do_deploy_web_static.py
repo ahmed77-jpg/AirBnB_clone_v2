@@ -8,22 +8,20 @@ from fabric.api import *
 
 env.hosts = ['34.139.123.27', '34.73.206.129']
 
-
 def do_pack():
-    """
-    function creates a .tgz
-    """
-    local("mkdir -p versions")
-    rtat = local("tar -cvzf versions/web_static_{}.tgz web_static"
-                 .format(datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")),
-                 capture=True)
-    if rtat.failed:
-        return None
-    return rtat
+    """ generates a .tgz archive """
+    name = "versions/web_static_" + str(d.now().year)
+    name += str(d.now().month) + str(d.now().day) + str(d.now().hour)
+    name += str(d.now().minute) + str(d.now().second) + ".tgz"
+    result = local("mkdir -p versions; tar -cvzf \"%s\" web_static" % name)
+    if result.failed:
+        return NULL
+    else:
+        return name
 
 
 def do_deploy(archive_path):
-    """Function to distribute an archive to a server"""
+    """ uploads the archive to servers """
     destination = "/tmp/" + archive_path.split("/")[-1]
     result = put(archive_path, "/tmp/")
     if result.failed:
