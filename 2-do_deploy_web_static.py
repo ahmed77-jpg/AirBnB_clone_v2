@@ -2,24 +2,9 @@
 """
 Write a Fabric script that generates a .tgz archive from the contents
 """
-from fabric.operations import local, run, put
-from datetime import datetime
-import os
 from fabric.api import *
-import re
+env.hosts = ['35.196.154.244', '35.227.97.207']
 
-
-def do_pack():
-    """
-    function creates a .tgz
-    """
-    local("mkdir -p versions")
-    rtat = local("tar -cvzf versions/web_static_{}.tgz web_static"
-                 .format(datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")),
-                 capture=True)
-    if rtat.failed:
-        return None
-    return rtat
 
 def do_deploy(archive_path):
     """ Script that does a lot of magic =) like penn and teller """
