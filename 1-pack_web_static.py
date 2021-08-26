@@ -2,18 +2,17 @@
 """
 Write a Fabric script that generates a .tgz archive from the contents
 """
-from fabric.api import local
+from fabric.operations import local
 from datetime import datetime
-import os
-
 
 def do_pack():
-    """web_static"""
-    tgz = datetime.now().strftime("%Y%m%d%H%M%S")
-    func = "versions/web_static_" + tgz + ".tgz"
+    """
+    function creates a .tgz
+    """
     local("mkdir -p versions")
-    local("tar -cvzf " + func + "web_static")
-    if not (os.path.exists(func)):
+    rtat = local("tar -cvzf versions/web_static_{}.tgz web_static"
+                   .format(datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")),
+                   capture=True)
+    if rtat.failed:
         return None
-    else:
-        return func
+    return rtat
