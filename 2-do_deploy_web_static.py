@@ -2,54 +2,48 @@
 """
 Write a Fabric script that generates a .tgz archive from the contents
 """
-from fabric.operations import local, run, put
-from datetime import datetime as d
 from fabric.api import *
+from datetime import datetime
+import os
+env.hosts = ["34.139.123.27", "34.73.206.129"]
+env.user = 'ubuntu'
+env.key_filename = '~/.ssh/holberton'
 
-env.hosts = ['34.139.123.27', '34.73.206.129']
 
 def do_pack():
-    """ generates a .tgz archive """
-    name = "versions/web_static_" + str(d.now().year)
-    name += str(d.now().month) + str(d.now().day) + str(d.now().hour)
-    name += str(d.now().minute) + str(d.now().second) + ".tgz"
-    result = local("mkdir -p versions; tar -cvzf \"%s\" web_static" % name)
-    if result.failed:
-        return NULL
-    else:
-        return name
+    """pack directory tar format to another directory"""
+
+    local('mkdir -p versions')
+    format_time = datetime.now().strftime('%Y%m%d%H%M%S')
+    filepath = 'versions/web_static_{}.tgz'.format(format_time)
+    cmd = "tar -cvzf {} web_static/".format(filepath)
+    try:
+        local(cmd, capture=True)
+        return filepath
+    except:
+        return None
 
 
 def do_deploy(archive_path):
-    """ uploads the archive to servers """
-    destination = "/tmp/" + archive_path.split("/")[-1]
-    result = put(archive_path, "/tmp/")
-    if result.failed:
+    """deploy tar package to remote server"""
+
+    if not os.path.exists(archive_path) and not os.path.isfile(archive_path):
         return False
-    filename = archive_path.split("/")[-1]
-    f = filename.split(".")[0]
-    directory = "/data/web_static/releases/" + f
-    run_res = run("mkdir -p \"%s\"" % directory)
-    if run_res.failed:
-        return False
-    run_res = run("tar -xzf %s -C %s" % (destination, directory))
-    if run_res.failed:
-        return False
-    run_res = run("rm %s" % destination)
-    if run_res:
-        return False
-    web = directory + "/web_static/*"
-    run_res = run("mv %s %s" % (web, directory))
-    if run_res.failed:
-        return False
-    web = web[0:-2]
-    run_res = run("rm -rf %s" % web)
-    if run_res.failed:
-        return False
-    run_res = run("rm -rf /data/web_static/current")
-    if run_res.failed:
-        return False
-    run_res = run("ln -s %s /data/web_static/current" % directory)
-    if run_res.failed:
+    try:
+        put(archive_path, "/tmp")
+        fileonly = os.path.basename(archive_path)
+        filename = os.path.splitext(fileonly)[0]
+        run("mkdir -p /data/web_static/releases/{}/".format(filename))
+        from_here = "/tmp/{}".format(fileonly)
+        to_here = "/data/web_static/releases/{}/".format(filename)
+        run("tar -xzf {} -C {}".format(from_here, to_here))
+        run('rm /tmp/{}'.format(fileonly))
+        run('mv {}web_static/* {}'.format(to_here, to_here))
+        run('rm -rf {}web_static'.format(to_here))
+        run('rm -rf /data/web_static/current')
+        run('ln -s {} /data/web_static/current'.format(to_here))
+        print('New version deployed!')
+        return True
+    except:
         return False
     return True
