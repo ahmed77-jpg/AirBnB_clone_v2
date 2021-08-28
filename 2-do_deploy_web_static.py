@@ -11,23 +11,19 @@ env.hosts = ["34.139.123.27", "34.73.206.129"]
 def do_deploy(archive_path):
     """deploy tar package to remote server"""
 
-    if not os.path.exists(archive_path) and not os.path.isfile(archive_path):
+    if os.path.exists(archive_path) is False:
         return False
-    try:
-        put(archive_path, "/tmp")
-        fileonly = os.path.basename(archive_path)
-        filename = os.path.splitext(fileonly)[0]
-        run("mkdir -p /data/web_static/releases/{}/".format(filename))
-        from_here = "/tmp/{}".format(fileonly)
-        to_here = "/data/web_static/releases/{}/".format(filename)
-        run("tar -xzf {} -C {}".format(from_here, to_here))
-        run('rm /tmp/{}'.format(fileonly))
-        run('mv {}web_static/* {}'.format(to_here, to_here))
-        run('rm -rf {}web_static'.format(to_here))
-        run('rm -rf /data/web_static/current')
-        run('ln -s {} /data/web_static/current'.format(to_here))
-        print('New version deployed!')
-        return True
-    except:
-        return False
+    arch_name = archive_path.split('/')[1]
+    arch_name_nex = arch_name.split(".")[0]
+    re_path = "/data/web_static/releases/" + arch_name_nex
+    up_path = '/tmp/' + arch_name
+    put(archive_path, up_path)
+    run('mkdir -p ' + re_path)
+    run('tar -xzf /tmp/{} -C {}/'.format(arch_name, re_path))
+    run('rm {}'.format(up_path))
+    mv = 'mv ' + re_path + '/web_static/* ' + re_path + '/'
+    run(mv)
+    run('rm -rf ' + re_path + '/web_static')
+    run('rm -rf /data/web_static/current')
+    run('ln -s ' + re_path + ' /data/web_static/current')
     return True
