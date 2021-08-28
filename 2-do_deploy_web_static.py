@@ -2,11 +2,25 @@
 """
 Write a Fabric script that generates a .tgz archive from the contents
 """
+from fabric.operations import local, run, put
 from datetime import datetime
-from fabric.api import local, put, run, env
-import os.path
+import os
+from fabric.api import env
+import re
 
-env.hosts = ["34.139.123.27", "34.73.206.129"]
+env.hosts = ['34.139.123.27', '34.73.206.129']
+
+def do_pack():
+    """Function to compress files in an archive"""
+    local("mkdir -p versions")
+    filename = "versions/web_static_{}.tgz".format(datetime.strftime(
+                                                   datetime.now(),
+                                                   "%Y%m%d%H%M%S"))
+    result = local("tar -cvzf {} web_static"
+                   .format(filename))
+    if result.failed:
+        return None
+    return filename
 
 def do_deploy(archive_path):
     """deploy tar package to remote server"""
