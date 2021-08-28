@@ -25,15 +25,11 @@ class FileStorage:
         Return:
             returns a dictionary of __object
         """
-        if cls:
-            if type(cls) is str:
-                cls = eval(cls)
-            cls_dict = {}
-            for k, v in self.__objects.items():
-                if type(v) is cls:
-                    cls_dict[k] = v
-            return cls_dict
-        return self.__objects
+        if cls is None:
+            return self.__objects
+        else:
+            r = {k: v for k, v in self.__objects.items() if type(v) is cls}
+            return(r)
 
     def new(self, obj):
         """sets __object to given obj
@@ -54,19 +50,29 @@ class FileStorage:
             json.dump(my_dict, f)
 
     def reload(self):
-        """serialize the file path to JSON file path
-        """
+        '''
+            Deserializes the JSON file to __objects.
+        '''
         try:
-            with open(self.__file_path, 'r', encoding="UTF-8") as f:
-                for key, value in (json.load(f)).items():
-                    value = eval(value["__class__"])(**value)
-                    self.__objects[key] = value
+            with open(FileStorage.__file_path, encoding="UTF8") as fd:
+                FileStorage.__objects = json.load(fd)
+            for key, val in FileStorage.__objects.items():
+                class_name = val["_class_"]
+                class_name = models.classes[class_name]
+                FileStorage.__objects[key] = class_name(**val)
         except FileNotFoundError:
             pass
-
+    
     def delete(self, obj=None):
-        """Delete a object from __objects, if it exists."""
+        """delete obj from __objects if its inside
+        """
         if obj is not None:
-            key = "{}.{}".format(obj.__class__.__name__, obj.id)
-            del self.__objects[key]
+            key = obj.__class__.__name__ + "." + obj.id
+            del(self.__objects[key])
             self.save()
+
+    def close(self):
+        """
+        Calls reload method for deserializing the JSON file to objects.
+        """
+        self.reload()
