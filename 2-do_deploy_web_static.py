@@ -7,7 +7,7 @@ archive to the web servers
 from fabric.api import run, put, local, env
 from datetime import datetime
 import os.path
-env.hosts = ['34.73.206.129', '34.139.123.27']
+env.hosts = ['34.139.123.27', '34.73.206.129']
 
 
 def do_pack():
@@ -39,11 +39,11 @@ def do_deploy(archive_path):
     release_path = '/data/web_static/releases/' + archive_name_without_ext
     upload_path = '/tmp/' + archive_name
     put(archive_path, upload_path)
-    run('sudo mkdir -p ' + release_path)
-    run('sudo tar -xzf ' + upload_path + ' -C ' + release_path)
-    run('sudo rm ' + upload_path)
-    run('sudo mv ' + release_path + '/web_static/* ' + release_path + '/')
-    run('sudo rm -rf ' + release_path + '/web_static')
-    run('sudo rm -rf /data/web_static/current')
-    run('sudo ln -s ' + release_path + ' /data/web_static/current')
+    run('mkdir -p ' + release_path)
+    run('tar -xzf ' + upload_path + ' -C ' + release_path)
+    run('rm ' + upload_path)
+    run('mv ' + release_path + '/web_static/* ' + release_path + '/')
+    run('rm -rf ' + release_path + '/web_static')
+    run('rm -rf /data/web_static/current')
+    run('ln -s ' + release_path + ' /data/web_static/current')
     return True
