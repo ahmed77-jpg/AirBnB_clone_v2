@@ -35,12 +35,12 @@ def do_deploy(archive_path):
     archive_name_without_ext = archive_path.split('/')[1].split('.')[0]
     release_path = '/data/web_static/releases/' + archive_name_without_ext
     upload_path = '/tmp/' + archive_name
-    put(archive_path, '/tmp')
-    run('sudo mkdir -p ' + release_path)
-    run('sudo tar -xzf ' + upload_path + ' -C ' + release_path)
-    run('sudo rm ' + upload_path)
-    run('sudo mv ' + release_path + '/web_static/* ' + release_path + '/')
-    run('sudo rm -rf ' + release_path + '/web_static')
-    run('sudo rm -rf /data/web_static/current')
-    run('sudo ln -s ' + release_path + ' /data/web_static/current')
+    put(archive_path, upload_path)
+    run('mkdir -p ' + release_path)
+    run('tar -xzf ' + upload_path + ' -C ' + release_path)
+    run('rm ' + upload_path)
+    run('mv ' + release_path + '/web_static/* ' + release_path + '/')
+    run('rm -rf ' + release_path + '/web_static')
+    run('rm -rf /data/web_static/current')
+    run('ln -s ' + release_path + ' /data/web_static/current')
     return True
