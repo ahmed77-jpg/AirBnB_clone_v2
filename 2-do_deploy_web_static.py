@@ -29,14 +29,12 @@ def do_deploy(archive_path):
     server, linked to the new version of your code
     (/data/web_static/releases/<archive filename without extension>)
     """
-    
     if not (os.path.exists(archive_path)):
         return False
     archive_name = archive_path.split('/')[1]
     archive_name_without_ext = archive_path.split('/')[1].split('.')[0]
     release_path = '/data/web_static/releases/' + archive_name_without_ext
     upload_path = '/tmp/' + archive_name
-
     put(archive_path, '/tmp')
     run('sudo mkdir -p ' + release_path)
     run('sudo tar -xzf ' + upload_path + ' -C ' + release_path)
