@@ -39,18 +39,25 @@ class DBStorage:
         """Query on the current database session all objects depending
         on the class name argument (cls).
         """
-        d = {}
+        my_dict = {}
+        query = []
         if cls is not None:
-            for obj in self.__session.query(cls):
-                k = str(cls) + '.' + obj.id
-                d[k] = obj
-            return(d)
-        else:
-            for cl in self.my_classes:
-                for obj in self.__session.query(eval(cl)):
-                    k = str(cl) + '.' + obj.id
-                    d[k] = obj
-            return(d)
+            if isinstance(cls, str):
+                cls = eval(cls)
+            query = self.__session.query(cls).all()
+
+        if cls is None:
+            query += self.__session.query(User).all()
+            query += self.__session.query(State).all()
+            query += self.__session.query(City).all()
+            query += self.__session.query(Amenity).all()
+            query += self.__session.query(Place).all()
+            query += self.__session.query(Review).all()
+
+        for val in query:
+            key = "{}.{}".format(val.__class__.__name__, val.id)
+            my_dict[key] = val
+        return my_dict
 
     def new(self, obj):
         """Adds the object to the current database session.
@@ -65,19 +72,18 @@ class DBStorage:
     def delete(self, obj=None):
         """Delete from the current database session obj if not None.
         """
-        self.__session.delete(obj)
-
+         if obj is not None:
+            self.__session.delete(obj)
+    
     def reload(self):
         """Create all tables in the database and create the current databse
         session.
         """
-        session_factory = sessionmaker(
-            bind=self.__engine,
-            expire_on_commit=False
-        )
-        Session = scoped_session(session_factory)
-        self.__session = Session()
-
+        Base.metadata.create_all(self.__engine)
+        session_factory = sessionmaker(bind=self.__engine,
+                                       expire_on_commit=False)
+        self.__session = scoped_session(session_factory)
+    
     def close(self):
         """
         Call remove() method on the private session attribute.
